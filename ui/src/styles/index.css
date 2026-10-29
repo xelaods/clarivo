@@ -91,3 +91,71 @@
   background: var(--border);
   border-radius: 9999px;
 }
+
+/* 横スライダー（EasyUI に無いので、同じトークンで作る） */
+input[type="range"].slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+}
+input[type="range"].slider::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--text-primary) 0%,
+    var(--text-primary) var(--fill, 50%),
+    var(--surface-hover) var(--fill, 50%),
+    var(--surface-hover) 100%
+  );
+  border: 1px solid var(--border);
+}
+input[type="range"].slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -6px;
+  border-radius: 9999px;
+  background: var(--text-primary);
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 0 1px var(--border-hover);
+  transition: transform 120ms ease;
+}
+input[type="range"].slider:active::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+input[type="range"].slider:focus-visible {
+  outline: none;
+}
+input[type="range"].slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 3px var(--accent-ring);
+}
+input[type="range"].slider:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.text-input {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+.text-input:focus {
+  border-color: var(--border-hover);
+  box-shadow: 0 0 0 3px var(--accent-subtle);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
