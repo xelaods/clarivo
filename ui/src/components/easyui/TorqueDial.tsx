@@ -281,11 +281,11 @@ export const TorqueDial: React.FC<TorqueDialProps> = ({
       {/* Numeric Value Display */}
       {showValue && (
         <div className="mt-3 text-center">
-          <div className="text-sm font-mono font-semibold text-[#FAFAFA] tracking-tight">
+          <div className="tabular text-[15px] font-semibold tracking-tight text-[#FAFAFA]">
             {value}
             {unit}
           </div>
-          <span className="text-[10px] font-mono text-[#6B6B6B]">{label}</span>
+          <span className="text-[11px] text-[#8A8A8A]">{label}</span>
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
   workflow_dispatch:
 
@@ -10,15 +11,104 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+
 jobs:
   test-windows:
-    name: Rust（Windows でビルドとテスト）
+    name: Rust（Windows でテスト）
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: clarivo
+          shared-key: clarivo-test
+
+      - name: 実データの用意（話者モデル・AutoEq）
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          New-Item -ItemType Directory -Force -Path testdata | Out-Null
+          # 話者モデル（アプリが初回にダウンロードするものと同じ）
+          Invoke-WebRequest -Uri "https://huggingface.co/Wespeaker/wespeaker-voxceleb-resnet34-LM/resolve/main/voxceleb_resnet34_LM.onnx" -OutFile testdata/speaker.onnx
+          # AutoEq の一覧と、アプリと同じ規則で組み立てた補正ファイル 1 つ
+          $base = "https://raw.githubusercontent.com/jaakkopasanen/AutoEq/master/results"
+          Invoke-WebRequest -Uri "$base/INDEX.md" -OutFile testdata/INDEX.md
+          $line = Select-String -Path testdata/INDEX.md -Pattern '^- \[Sennheiser HD 650\]\(\./([^)]+)\) by' | Select-Object -First 1
+          $path = $line.Matches[0].Groups[1].Value
+          $last = $path.Split('/')[-1]
+          Invoke-WebRequest -Uri "$base/$path/$last%20ParametricEQ.txt" -OutFile testdata/sample.txt
+          "CLARIVO_SPEAKER_MODEL=$PWD\testdata\speaker.onnx" | Out-File -Append $env:GITHUB_ENV
+          "CLARIVO_AUTOEQ_DIR=$PWD\testdata" | Out-File -Append $env:GITHUB_ENV
+
       - name: テスト（音声エンジン・DSP・振り分け・話者判定）
-        run: cargo test --release --locked
+        run: cargo test --release --locked -- --nocapture
+
+  build-windows:
+    name: アプリとインストーラーのビルド
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: clarivo-app
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: 画面のビルド
+        working-directory: ui
+        run: |
+          npm ci
+          npm run build
+
+      - name: アプリのビルド（NSIS インストーラー）
+        shell: bash
+        run: ui/node_modules/.bin/tauri build --ci
+
+      - name: 起動テスト（後片付けモードと、画面の表示）
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $exe = "target/release/clarivo.exe"
+          # アンインストーラーから呼ばれる後片付け（COM・非公開 API の呼び出し）が落ちずに終わること
+          $p = Start-Process -FilePath $exe -ArgumentList "--reset-audio" -PassThru -Wait
+          if ($p.ExitCode -ne 0) { throw "--reset-audio が失敗しました: $($p.ExitCode)" }
+          # 通常起動して 20 秒後も動いていること（音声デバイスの無い環境でも落ちない）
+          $app = Start-Process -FilePath $exe -PassThru
+          Start-Sleep -Seconds 20
+          if ($app.HasExited) { throw "起動後に終了しました: $($app.ExitCode)" }
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp)
+          $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          New-Item -ItemType Directory -Force -Path smoke | Out-Null
+          $bmp.Save("smoke/screen.png", [System.Drawing.Imaging.ImageFormat]::Png)
+          Stop-Process -Id $app.Id -Force
+          $log = Join-Path $env:LOCALAPPDATA "com.xelaods.clarivo/logs/clarivo.log"
+          if (Test-Path $log) { Copy-Item $log smoke/clarivo.log; Get-Content $log }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: clarivo-setup
+          path: target/release/bundle/nsis/*.exe
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: smoke-test
+          path: smoke/
+          if-no-files-found: ignore
+
+      - name: リリースに添付（タグのとき）
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: target/release/bundle/nsis/*.exe
+          generate_release_notes: true

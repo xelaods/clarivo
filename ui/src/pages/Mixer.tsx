@@ -83,7 +83,7 @@ export function MixerPage({ onNavigate }: { onNavigate: (page: string) => void }
             </span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="w-12 text-[12px] text-text-secondary">ゲーム</span>
+            <span className="w-14 whitespace-nowrap text-[12px] text-text-secondary">ゲーム</span>
             <input
               type="range"
               className="slider flex-1"
@@ -95,7 +95,7 @@ export function MixerPage({ onNavigate }: { onNavigate: (page: string) => void }
               onChange={(e) => update((s) => void (s.output.chatmix = Number(e.target.value)))}
               onDoubleClick={() => update((s) => void (s.output.chatmix = 0))}
             />
-            <span className="w-12 text-right text-[12px] text-text-secondary">チャット</span>
+            <span className="w-14 whitespace-nowrap text-right text-[12px] text-text-secondary">チャット</span>
           </div>
         </div>
       </div>

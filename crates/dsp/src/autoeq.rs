@@ -160,4 +160,23 @@ mod tests {
         assert_eq!(idx[0].1, "oratory1990/over-ear/Sennheiser%20HD%20650");
         assert_eq!(idx[0].2, "oratory1990");
     }
+
+    /// 実際の AutoEq のデータで読めるか（CI でダウンロードしたときだけ実行）。
+    /// CLARIVO_AUTOEQ_DIR に INDEX.md と sample.txt（ParametricEQ）を置く。
+    #[test]
+    fn real_autoeq_data() {
+        let Ok(dir) = std::env::var("CLARIVO_AUTOEQ_DIR") else {
+            eprintln!("CLARIVO_AUTOEQ_DIR が無いのでスキップ");
+            return;
+        };
+        let dir = std::path::Path::new(&dir);
+        let md = std::fs::read_to_string(dir.join("INDEX.md")).unwrap();
+        let idx = parse_autoeq_index(&md);
+        eprintln!("AutoEq の機種数: {}", idx.len());
+        assert!(idx.len() > 1000);
+        assert!(idx.iter().all(|(n, p, _)| !n.is_empty() && !p.is_empty()));
+        let txt = std::fs::read_to_string(dir.join("sample.txt")).unwrap();
+        let eq = parse_equalizer_apo(&txt).unwrap();
+        assert!(!eq.bands.is_empty());
+    }
 }

@@ -44,6 +44,7 @@ export const api = {
   resetAudio: () => call<void>("reset_audio"),
   restartEngine: () => call<void>("restart_engine"),
   foregroundApp: () => call<string | null>("foreground_app"),
+  openLogDir: () => call<void>("open_log_dir"),
   quit: () => call<void>("quit_app"),
 };
 

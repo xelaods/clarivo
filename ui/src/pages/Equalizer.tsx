@@ -76,8 +76,9 @@ function ChannelEq({ channel }: { channel: "game" | "chat" }) {
         title={channel === "game" ? "Game のEQ" : "Chat のEQ"}
         aside={
           <div className="flex items-center gap-2">
-            <div className="w-[220px]">
+            <div className="w-[240px]">
               <Combobox
+                className="w-full"
                 options={presets.map((p) => ({ value: p.id, label: p.name, description: p.description }))}
                 value={current ? current.id : null}
                 placeholder="カスタム"

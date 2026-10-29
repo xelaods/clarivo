@@ -128,7 +128,7 @@ export function Sidebar({
             <motion.aside
               role="dialog"
               aria-modal="true"
-              aria-label="Navigation"
+              aria-label="ナビゲーション"
               className="absolute inset-y-0 left-0 w-[17rem] max-w-[85vw] overflow-hidden border-r border-neutral-200 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950"
               initial={{ x: "-100%" }}
               animate={{ x: 0 }}
@@ -156,7 +156,7 @@ export function SidebarTrigger({ className, ...props }: React.ComponentProps<"bu
   return (
     <button
       type="button"
-      aria-label="Open navigation"
+      aria-label="メニューを開く"
       className={cn(
         "grid size-9 place-items-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 md:hidden dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white",
         className
@@ -354,7 +354,7 @@ function Panel({
         )}
 
         <nav
-          aria-label="Main"
+          aria-label="メイン"
           onMouseLeave={() => {
             setHovering(false);
             setTip(null);
@@ -396,10 +396,10 @@ function Panel({
                 onMouseEnter={(e) => {
                   if (!collapsed) return;
                   const r = e.currentTarget.getBoundingClientRect();
-                  setTip({ label: "Expand", x: r.right + 10, y: r.top + r.height / 2 });
+                  setTip({ label: "広げる", x: r.right + 10, y: r.top + r.height / 2 });
                 }}
                 onMouseLeave={() => setTip(null)}
-                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                aria-label={collapsed ? "サイドバーを広げる" : "サイドバーを畳む"}
                 className="flex h-9 w-full items-center gap-3 rounded-lg px-2.5 text-sm text-neutral-500 outline-none transition-colors hover:bg-neutral-100 hover:text-neutral-900 focus-visible:ring-2 focus-visible:ring-neutral-400/50 dark:text-neutral-400 dark:hover:bg-neutral-900 dark:hover:text-white dark:focus-visible:ring-neutral-600/60"
               >
                 <span className="grid size-5 shrink-0 place-items-center">
@@ -411,11 +411,11 @@ function Panel({
                   transition={{ duration: 0.15 }}
                   className="flex-1 whitespace-nowrap text-left"
                 >
-                  Collapse
+                  畳む
                 </motion.span>
                 {!collapsed && (
                   <kbd className="rounded border border-neutral-200 px-1 font-sans text-[10px] text-neutral-400 dark:border-neutral-800">
-                    ⌘B
+                    Ctrl+B
                   </kbd>
                 )}
               </button>

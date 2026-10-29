@@ -13,7 +13,7 @@ use anyhow::{anyhow, Context, Result};
 use clarivo_dsp::drift::DriftResampler;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use wasapi::{
     initialize_mta, AudioCaptureClient, AudioClient, AudioRenderClient, Device, DeviceEnumerator,
     Direction, Handle, Role, SampleType, StreamMode, WaveFormat,
@@ -79,6 +79,37 @@ fn update_cable_status(shared: &Shared, list: &DeviceList) {
     };
     shared.status.lock().cables = st;
 }
+
+/// 開いているデバイスの組み合わせ。既定デバイスの変更や VB-CABLE の追加・取り外しを
+/// 2 秒おきに調べ、変わっていたら開き直す（Windows の通知を受け取る代わり）。
+fn mic_signature(settings: &Settings, list: &DeviceList) -> (Option<String>, Option<String>) {
+    (
+        devices::pick_microphone(&list.inputs, settings.mic.input_device.as_deref()).map(|d| d.id.clone()),
+        devices::pick_cable(&list.outputs, settings.mic.virtual_output.as_deref(), Cable::Main).map(|d| d.id.clone()),
+    )
+}
+
+type OutSignature = [Option<String>; 4];
+
+fn output_signature(settings: &Settings, list: &DeviceList) -> OutSignature {
+    [
+        devices::pick_headphones(&list.outputs, settings.output.headphones.as_deref()).map(|d| d.id.clone()),
+        devices::pick_cable(&list.inputs, settings.output.game_source.as_deref(), Cable::A).map(|d| d.id.clone()),
+        devices::pick_cable(&list.inputs, settings.output.chat_source.as_deref(), Cable::B).map(|d| d.id.clone()),
+        if settings.stream.enabled {
+            settings
+                .stream
+                .device
+                .as_deref()
+                .and_then(|id| list.outputs.iter().find(|d| d.id == id))
+                .map(|d| d.id.clone())
+        } else {
+            None
+        },
+    ]
+}
+
+const DEVICE_CHECK: Duration = Duration::from_secs(2);
 
 // ---------------------------------------------------------------------------
 // ストリーム
@@ -278,6 +309,8 @@ fn idle(rx_try: &mut dyn FnMut() -> Option<Flow>, ms: u64) -> Option<Flow> {
 struct MicSession {
     capture: Capture,
     render: Option<Render>,
+    signature: (Option<String>, Option<String>),
+    last_check: Instant,
     drift: DriftResampler,
     mono: Vec<f32>,
     stereo: Vec<f32>,
@@ -320,6 +353,8 @@ fn open_mic(settings: &Settings, shared: &Shared) -> Result<MicSession> {
         st.mic.running = true;
     }
     Ok(MicSession {
+        signature: mic_signature(settings, &list),
+        last_check: Instant::now(),
         capture,
         render,
         drift: DriftResampler::new(1, 480),
@@ -334,6 +369,16 @@ fn mic_loop(sess: &mut MicSession, runner: &mut MicRunner, rx: &Receiver<MicComm
             match runner.handle(cmd) {
                 Flow::Continue => {}
                 other => return Ok(other),
+            }
+        }
+        if sess.last_check.elapsed() >= DEVICE_CHECK {
+            sess.last_check = Instant::now();
+            if let Ok(list) = list_devices() {
+                update_cable_status(shared, &list);
+                if mic_signature(&runner.settings, &list) != sess.signature {
+                    log::info!("マイクまたは仮想マイクが変わったため開き直します");
+                    return Ok(Flow::Reopen);
+                }
             }
         }
         if !sess.capture.wait(100) {
@@ -424,6 +469,8 @@ pub(crate) fn run_mic(
 // ---------------------------------------------------------------------------
 
 struct OutSession {
+    signature: OutSignature,
+    last_check: Instant,
     game: Option<Capture>,
     game_channels: usize,
     chat: Option<Capture>,
@@ -506,6 +553,8 @@ fn open_output(settings: &Settings, shared: &Shared) -> Result<OutSession> {
         st.output.latency_ms = (720.0 + 480.0 + 960.0) / 48.0;
     }
     Ok(OutSession {
+        signature: output_signature(settings, &list),
+        last_check: Instant::now(),
         game,
         game_channels,
         chat,
@@ -516,7 +565,12 @@ fn open_output(settings: &Settings, shared: &Shared) -> Result<OutSession> {
     })
 }
 
-fn output_loop(sess: &mut OutSession, runner: &mut OutRunner, rx: &Receiver<OutCommand>) -> Result<Flow> {
+fn output_loop(
+    sess: &mut OutSession,
+    runner: &mut OutRunner,
+    rx: &Receiver<OutCommand>,
+    shared: &Shared,
+) -> Result<Flow> {
     runner.reset_inputs();
     runner.sync_stream();
     loop {
@@ -524,6 +578,16 @@ fn output_loop(sess: &mut OutSession, runner: &mut OutRunner, rx: &Receiver<OutC
             match runner.handle(cmd) {
                 Flow::Continue => {}
                 other => return Ok(other),
+            }
+        }
+        if sess.last_check.elapsed() >= DEVICE_CHECK {
+            sess.last_check = Instant::now();
+            if let Ok(list) = list_devices() {
+                update_cable_status(shared, &list);
+                if output_signature(&runner.settings, &list) != sess.signature {
+                    log::info!("再生デバイスが変わったため開き直します");
+                    return Ok(Flow::Reopen);
+                }
             }
         }
         if !sess.hp.wait(100) {
@@ -570,7 +634,7 @@ pub(crate) fn run_output(
             continue;
         }
         match open_output(&runner.settings, &shared) {
-            Ok(mut sess) => match output_loop(&mut sess, &mut runner, &rx) {
+            Ok(mut sess) => match output_loop(&mut sess, &mut runner, &rx, &shared) {
                 Ok(Flow::Stop) => break,
                 Ok(_) => continue,
                 Err(e) => {

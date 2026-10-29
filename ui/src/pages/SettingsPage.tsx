@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { Plus, Trash2, RotateCcw } from "lucide-react";
-import { api, openUrl } from "@/lib/api";
+import { Plus, Trash2, RotateCcw, FolderOpen, Compass } from "lucide-react";
+import { api, inTauri, openUrl } from "@/lib/api";
 import { useStore } from "@/lib/store";
 import type { HotkeySettings } from "@/lib/types";
 import { DragToConfirm } from "@/components/easyui/DragToConfirm";
-import { Button, DeviceSelect, Page, Row, Section, Toggle } from "@/components/ui";
+import { LiveLineChart } from "@/components/easyui/LiveLineChart";
+import { Button, DeviceSelect, Page, Pill, Row, Section, Toggle } from "@/components/ui";
+import type { PipelineStatus } from "@/lib/types";
 
-export function SettingsPage() {
+export function SettingsPage({ onOpenSetup }: { onOpenSetup: () => void }) {
   const { settings, update, devices, refreshDevices, boot, toast } = useStore();
 
   return (
@@ -55,7 +57,14 @@ export function SettingsPage() {
 
       <Profiles />
 
+      <Diagnostics />
+
       <Section title="困ったとき">
+        <Row label="セットアップガイド" description="VB-CABLE の確認、マイクとヘッドホンの選び方、Discord での設定を案内します。">
+          <Button onClick={onOpenSetup}>
+            <Compass className="h-3.5 w-3.5" /> 開く
+          </Button>
+        </Row>
         <Row label="音声エンジンを再起動" description="音が出なくなった、デバイスを付け替えた、などのときに試してください。">
           <Button onClick={() => api.restartEngine().then(() => toast({ title: "再起動しました", variant: "success" }))}>再起動</Button>
         </Row>
@@ -71,6 +80,16 @@ export function SettingsPage() {
           </div>
         </Row>
       </Section>
+
+      {inTauri && (
+        <Section title="ログ">
+          <Row label="ログフォルダを開く" description="うまく動かないときは、ここにある clarivo.log に原因が書かれています。">
+            <Button onClick={() => api.openLogDir().catch((e) => toast({ title: "開けません", description: String(e), variant: "error" }))}>
+              <FolderOpen className="h-3.5 w-3.5" /> 開く
+            </Button>
+          </Row>
+        </Section>
+      )}
 
       <Section title="Clarivo について" description={`バージョン ${boot.version}`}>
         <Row label="VB-CABLE" description="仮想マイク・Game・Chat に使う仮想デバイス（VB-Audio 製、寄付制）。">
@@ -208,5 +227,54 @@ function Profiles() {
         </Button>
       </div>
     </Section>
+  );
+}
+
+/** 動作状況：使っているデバイス、遅延、処理の重さ。 */
+function Diagnostics() {
+  const { status } = useStore();
+  const st = status?.status;
+  return (
+    <Section title="動作状況" description="処理の重さが 100% を超えると音が途切れます。高品質ノイズ除去や話者判定を使うと重くなります。">
+      <PipelineRow label="マイク" p={st?.mic} />
+      <PipelineRow label="出力" p={st?.output} />
+      <div className="px-5 pb-4 pt-3">
+        <div className="mb-1 text-[12px] text-text-muted">処理の重さ（マイクと出力のうち重いほう）</div>
+        <LiveLineChart
+          height={150}
+          intervalMs={500}
+          windowSeconds={60}
+          domain={[0, 100]}
+          unit="%"
+          showDelta={false}
+          color="var(--meter-ok)"
+          formatValue={(v) => v.toFixed(0)}
+          source={(push) => {
+            let alive = true;
+            const id = window.setInterval(async () => {
+              try {
+                const m = await api.meters();
+                if (alive) push(Math.max(m.micLoad, m.outputLoad) * 100);
+              } catch {
+                /* 次の周期で再試行 */
+              }
+            }, 500);
+            return () => {
+              alive = false;
+              window.clearInterval(id);
+            };
+          }}
+        />
+      </div>
+    </Section>
+  );
+}
+
+function PipelineRow({ label, p }: { label: string; p?: PipelineStatus }) {
+  return (
+    <Row label={label} description={p?.error ? p.error : p?.devices.length ? p.devices.join(" → ") : "デバイスなし"}>
+      {p?.running && <span className="tabular text-[12px] text-text-secondary">遅延 約 {Math.round(p.latencyMs)} ms</span>}
+      <Pill tone={p?.error ? "warn" : p?.running ? "ok" : "off"}>{p?.error ? "要確認" : p?.running ? "動作中" : "停止中"}</Pill>
+    </Row>
   );
 }

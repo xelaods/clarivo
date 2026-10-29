@@ -335,6 +335,21 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             show_main(app);
         }))
+        .plugin(
+            // %LOCALAPPDATA%\com.xelaods.clarivo\logs\clarivo.log に残す（設定ページから開ける）
+            tauri_plugin_log::Builder::new()
+                .clear_targets()
+                .targets([
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::LogDir {
+                        file_name: Some("clarivo".into()),
+                    }),
+                    tauri_plugin_log::Target::new(tauri_plugin_log::TargetKind::Stdout),
+                ])
+                .level(log::LevelFilter::Info)
+                .max_file_size(2_000_000)
+                .rotation_strategy(tauri_plugin_log::RotationStrategy::KeepOne)
+                .build(),
+        )
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::init(
@@ -360,6 +375,7 @@ pub fn run() {
                 .build(),
         )
         .setup(move |app| {
+            log::info!("Clarivo {} を起動します", env!("CARGO_PKG_VERSION"));
             let handle = app.handle().clone();
             let config_dir = app.path().app_config_dir()?;
             let cache_dir = app.path().app_cache_dir()?;
@@ -447,6 +463,7 @@ pub fn run() {
             commands::restart_engine,
             commands::save_settings_now,
             commands::foreground_app,
+            commands::open_log_dir,
             commands::quit_app,
         ])
         .build(tauri::generate_context!())

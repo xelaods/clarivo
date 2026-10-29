@@ -69,7 +69,6 @@ export function MicPage() {
             disabled={mic.denoise === "off"}
             onChange={(v) => update((s) => void (s.mic.strengthDb = v))}
           />
-          <span className="text-[12px] text-text-muted">消す強さ</span>
         </div>
       </div>
 
