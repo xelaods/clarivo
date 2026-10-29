@@ -16,7 +16,7 @@ use windows::Win32::System::Threading::{
 };
 use windows::Win32::System::WinRT::RoGetActivationFactory;
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
-use windows_core::{interface, IUnknown, Interface, GUID, HRESULT, HSTRING, PCWSTR, PWSTR};
+use windows_core::{interface, IUnknown, IUnknown_Vtbl, Interface, GUID, HRESULT, HSTRING, PCWSTR, PWSTR};
 
 // ---------------------------------------------------------------------------
 // 非公開 COM インターフェース
