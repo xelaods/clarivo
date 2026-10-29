@@ -1,0 +1,30 @@
+[package]
+name = "clarivo-engine"
+description = "Clarivo audio engine: settings, processing chains and the Windows WASAPI backend"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[features]
+default = ["deepfilter"]
+deepfilter = ["clarivo-denoise/deepfilter"]
+
+[dependencies]
+clarivo-dsp = { path = "../dsp" }
+clarivo-denoise = { path = "../denoise", default-features = false }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+anyhow = { workspace = true }
+rtrb = { workspace = true }
+parking_lot = { workspace = true }
+sonora = "0.2"
+
+[target.'cfg(windows)'.dependencies]
+wasapi = "0.26"
+windows = { version = "0.62", features = [
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_System_Com",
+    "Win32_Media_Audio",
+] }

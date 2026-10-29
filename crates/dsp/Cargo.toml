@@ -1,0 +1,12 @@
+[package]
+name = "clarivo-dsp"
+description = "Platform independent audio DSP building blocks for Clarivo"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }
