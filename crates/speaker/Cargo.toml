@@ -1,0 +1,21 @@
+[package]
+name = "clarivo-speaker"
+description = "Speaker enrollment, speaker gate and target-speaker extraction for Clarivo"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+clarivo-dsp = { path = "../dsp" }
+clarivo-denoise = { path = "../denoise", default-features = false }
+clarivo-engine = { path = "../engine", default-features = false }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+anyhow = { workspace = true }
+rtrb = { workspace = true }
+rustfft = "6"
+# DeepFilterNet と同じ版に合わせる
+tract-onnx = "=0.21.4"
+
+[dev-dependencies]

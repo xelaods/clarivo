@@ -4,11 +4,16 @@ members = [
     "crates/dsp",
     "crates/denoise",
     "crates/engine",
+    "crates/routing",
+    "crates/speaker",
+    "src-tauri",
 ]
 default-members = [
     "crates/dsp",
     "crates/denoise",
     "crates/engine",
+    "crates/routing",
+    "crates/speaker",
 ]
 
 [workspace.package]

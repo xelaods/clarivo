@@ -33,6 +33,21 @@ pub struct Recording {
     pub processed: Vec<f32>,
 }
 
+/// 録音の完了待ち。
+pub struct PendingRecording {
+    rx: Receiver<Recording>,
+    seconds: f32,
+}
+
+impl PendingRecording {
+    pub fn wait(self) -> anyhow::Result<Recording> {
+        let wait = Duration::from_secs_f32(self.seconds + 5.0);
+        self.rx
+            .recv_timeout(wait)
+            .map_err(|_| anyhow::anyhow!("録音できませんでした（マイクから音が届いていません）"))
+    }
+}
+
 pub(crate) enum MicCommand {
     Apply(Box<Settings>),
     Record {
@@ -159,18 +174,23 @@ impl Engine {
         }
     }
 
-    /// マイクを `seconds` 秒録音する（処理前と処理後）。終わるまで待つ。
-    pub fn record(&self, seconds: f32) -> anyhow::Result<Recording> {
+    /// マイクの録音（処理前と処理後）を始める。結果は返り値の受け口に届く。
+    /// 呼び出し側はエンジンのロックを外してから待てるので、録音中も設定を変えられる。
+    pub fn start_record(&self, seconds: f32) -> anyhow::Result<PendingRecording> {
         let Some(m) = &self.mic else {
             anyhow::bail!("エンジンが動いていません");
         };
-        let frames = (seconds.clamp(0.5, 60.0) * 48_000.0) as usize;
+        let seconds = seconds.clamp(0.5, 60.0);
+        let frames = (seconds * 48_000.0) as usize;
         let (tx, rx): (Sender<Recording>, Receiver<Recording>) = mpsc::channel();
         m.tx.send(MicCommand::Record { frames, reply: tx })
             .map_err(|_| anyhow::anyhow!("マイクスレッドが止まっています"))?;
-        let wait = Duration::from_secs_f32(seconds + 5.0);
-        rx.recv_timeout(wait)
-            .map_err(|_| anyhow::anyhow!("録音できませんでした（マイクから音が届いていません）"))
+        Ok(PendingRecording { rx, seconds })
+    }
+
+    /// マイクを `seconds` 秒録音する。終わるまで待つ。
+    pub fn record(&self, seconds: f32) -> anyhow::Result<Recording> {
+        self.start_record(seconds)?.wait()
     }
 
     pub fn stop(&mut self) {

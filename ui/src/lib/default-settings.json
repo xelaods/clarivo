@@ -1,0 +1,205 @@
+{
+  "version": 1,
+  "mic": {
+    "enabled": true,
+    "inputDevice": null,
+    "virtualOutput": null,
+    "denoise": "light",
+    "strengthDb": 60.0,
+    "highpass": true,
+    "gate": {
+      "enabled": true,
+      "thresholdDb": -50.0,
+      "rangeDb": -60.0,
+      "attackMs": 2.0,
+      "holdMs": 120.0,
+      "releaseMs": 150.0
+    },
+    "compressor": {
+      "enabled": true,
+      "thresholdDb": -24.0,
+      "ratio": 3.0,
+      "kneeDb": 6.0,
+      "attackMs": 5.0,
+      "releaseMs": 120.0,
+      "makeupDb": 6.0
+    },
+    "gainDb": 0.0,
+    "limiterDb": -1.0,
+    "muted": false,
+    "monitor": false,
+    "monitorDb": -6.0,
+    "speaker": {
+      "mode": "off",
+      "profile": null,
+      "threshold": 0.45,
+      "attenuationDb": -40.0,
+      "holdMs": 600.0,
+      "extractModel": null
+    },
+    "echoCancel": false
+  },
+  "output": {
+    "enabled": true,
+    "headphones": null,
+    "gameSource": null,
+    "chatSource": null,
+    "chatmix": 0.0,
+    "masterDb": 0.0,
+    "headphoneEq": {
+      "enabled": false,
+      "autoPreamp": true,
+      "preampDb": 0.0,
+      "bands": []
+    },
+    "headphoneEqName": null
+  },
+  "game": {
+    "volumeDb": 0.0,
+    "muted": false,
+    "preset": "flat",
+    "eq": {
+      "enabled": false,
+      "autoPreamp": true,
+      "preampDb": 0.0,
+      "bands": []
+    },
+    "leveler": {
+      "enabled": false,
+      "thresholdDb": -30.0,
+      "ratio": 2.0,
+      "maxBoostDb": 12.0,
+      "floorDb": -65.0,
+      "attackMs": 10.0,
+      "releaseMs": 250.0
+    },
+    "surround": {
+      "enabled": false,
+      "room": 0.25,
+      "virtualizeStereo": true
+    },
+    "denoise": false,
+    "denoiseStrengthDb": 30.0
+  },
+  "chat": {
+    "volumeDb": 0.0,
+    "muted": false,
+    "preset": "flat",
+    "eq": {
+      "enabled": false,
+      "autoPreamp": true,
+      "preampDb": 0.0,
+      "bands": []
+    },
+    "leveler": {
+      "enabled": false,
+      "thresholdDb": -30.0,
+      "ratio": 2.0,
+      "maxBoostDb": 12.0,
+      "floorDb": -65.0,
+      "attackMs": 10.0,
+      "releaseMs": 250.0
+    },
+    "surround": {
+      "enabled": false,
+      "room": 0.25,
+      "virtualizeStereo": true
+    },
+    "denoise": true,
+    "denoiseStrengthDb": 30.0
+  },
+  "stream": {
+    "enabled": false,
+    "device": null,
+    "gameDb": 0.0,
+    "chatDb": 0.0,
+    "micDb": 0.0,
+    "includeMic": false
+  },
+  "routing": {
+    "enabled": true,
+    "rules": [
+      {
+        "process": "discord.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "discordptb.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "discordcanary.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "vesktop.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "teams.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "ms-teams.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "zoom.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "slack.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "skype.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "line.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "teamspeak.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "ts3client_win64.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "mumble.exe",
+        "channel": "chat"
+      },
+      {
+        "process": "guilded.exe",
+        "channel": "chat"
+      }
+    ],
+    "setDefaultDevices": true,
+    "gameSink": null,
+    "chatSink": null,
+    "savedDefaultConsole": null,
+    "savedDefaultCommunications": null
+  },
+  "profiles": {
+    "autoSwitch": false,
+    "items": [],
+    "active": null
+  },
+  "hotkeys": {
+    "toggleMicMute": "Ctrl+Alt+M",
+    "nextPreset": "Ctrl+Alt+P",
+    "chatmixGame": "Ctrl+Alt+ArrowLeft",
+    "chatmixChat": "Ctrl+Alt+ArrowRight",
+    "toggleSurround": "Ctrl+Alt+S"
+  },
+  "app": {
+    "overlay": true,
+    "autostart": false,
+    "startMinimized": false,
+    "closeToTray": true,
+    "onboarded": false
+  },
+  "customPresets": []
+}

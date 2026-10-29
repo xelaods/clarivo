@@ -1,0 +1,49 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Clarivo",
+  "mainBinaryName": "clarivo",
+  "version": "0.1.0",
+  "identifier": "com.xelaods.clarivo",
+  "build": {
+    "frontendDist": "../ui/dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Clarivo",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 960,
+        "minHeight": 640,
+        "decorations": false,
+        "visible": false,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis"],
+    "publisher": "xelaods",
+    "shortDescription": "AIノイズキャンセルとアプリ別EQのオーディオミキサー",
+    "copyright": "© 2026 xelaods",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": {
+        "languages": ["Japanese"],
+        "installMode": "currentUser",
+        "installerHooks": "./nsis/hooks.nsh"
+      }
+    }
+  }
+}

@@ -204,6 +204,7 @@ impl MicRunner {
     }
 }
 
+#[cfg_attr(not(windows), allow(dead_code))]
 /// 出力側の処理。Game・Chat・モニター音をそれぞれのずれ補正を通して 10ms ずつ混ぜる。
 pub(crate) struct OutRunner {
     pub mixer: OutputMixer,
@@ -227,6 +228,7 @@ pub(crate) struct OutRunner {
 /// 各入力の目標バッファ量（15ms）
 const INPUT_TARGET: usize = 720;
 
+#[cfg_attr(not(windows), allow(dead_code))]
 impl OutRunner {
     pub fn new(settings: Settings, links: OutLinks, shared: Arc<Shared>) -> Self {
         let mixer = OutputMixer::new(

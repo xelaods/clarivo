@@ -389,8 +389,8 @@ impl Default for HotkeySettings {
         Self {
             toggle_mic_mute: Some("Ctrl+Alt+M".into()),
             next_preset: Some("Ctrl+Alt+P".into()),
-            chatmix_game: Some("Ctrl+Alt+Left".into()),
-            chatmix_chat: Some("Ctrl+Alt+Right".into()),
+            chatmix_game: Some("Ctrl+Alt+ArrowLeft".into()),
+            chatmix_chat: Some("Ctrl+Alt+ArrowRight".into()),
             toggle_surround: Some("Ctrl+Alt+S".into()),
         }
     }
@@ -444,5 +444,18 @@ mod tests {
         assert_eq!(r.channel_for("spotify.exe"), ChannelId::Chat);
         r.set_rule("discord.exe", ChannelId::Game);
         assert_eq!(r.channel_for("discord.exe"), ChannelId::Game);
+    }
+}
+
+#[cfg(test)]
+mod export {
+    /// 画面の開発用モック（ui/src/lib/default-settings.json）を作る。
+    /// `CLARIVO_EXPORT_DEFAULTS=path cargo test -p clarivo-engine export_defaults`
+    #[test]
+    fn export_defaults() {
+        if let Ok(path) = std::env::var("CLARIVO_EXPORT_DEFAULTS") {
+            let json = serde_json::to_string_pretty(&super::Settings::default()).unwrap();
+            std::fs::write(path, json).unwrap();
+        }
     }
 }
