@@ -43,7 +43,15 @@ jobs:
           "CLARIVO_AUTOEQ_DIR=$PWD\testdata" | Out-File -Append $env:GITHUB_ENV
 
       - name: テスト（音声エンジン・DSP・振り分け・話者判定）
-        run: cargo test --release --locked -- --nocapture
+        shell: bash
+        run: |
+          set -o pipefail
+          cargo test --release --locked -- --nocapture 2>&1 | tee test.log
+
+      - name: 失敗内容を注釈に出す
+        if: failure()
+        shell: bash
+        run: bash .github/scripts/annotate.sh test.log
 
   build-windows:
     name: アプリとインストーラーのビルド
@@ -68,7 +76,14 @@ jobs:
 
       - name: アプリのビルド（NSIS インストーラー）
         shell: bash
-        run: ui/node_modules/.bin/tauri build --ci
+        run: |
+          set -o pipefail
+          ui/node_modules/.bin/tauri build --ci 2>&1 | tee build.log
+
+      - name: 失敗内容を注釈に出す
+        if: failure()
+        shell: bash
+        run: bash .github/scripts/annotate.sh build.log
 
       - name: 起動テスト（後片付けモードと、画面の表示）
         shell: pwsh
@@ -91,7 +106,11 @@ jobs:
           $bmp.Save("smoke/screen.png", [System.Drawing.Imaging.ImageFormat]::Png)
           Stop-Process -Id $app.Id -Force
           $log = Join-Path $env:LOCALAPPDATA "com.xelaods.clarivo/logs/clarivo.log"
-          if (Test-Path $log) { Copy-Item $log smoke/clarivo.log; Get-Content $log }
+          if (Test-Path $log) {
+            Copy-Item $log smoke/clarivo.log
+            $text = (Get-Content $log -Tail 40) -join "%0A"
+            Write-Output "::notice title=clarivo.log::$text"
+          }
 
       - uses: actions/upload-artifact@v4
         with:
