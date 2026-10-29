@@ -449,8 +449,13 @@ pub(crate) fn run_mic(
             },
             Err(e) => {
                 {
+                    let msg = format!("{e:#}");
                     let mut st = shared.status.lock();
-                    st.mic.error = Some(format!("{e:#}"));
+                    // 同じエラーを 2 秒おきに書き続けないよう、変わったときだけ残す
+                    if st.mic.error.as_deref() != Some(msg.as_str()) {
+                        log::warn!("マイクを開けません: {msg}");
+                    }
+                    st.mic.error = Some(msg);
                     st.mic.running = false;
                 }
                 if let Some(Flow::Stop) =
@@ -654,8 +659,13 @@ pub(crate) fn run_output(
             },
             Err(e) => {
                 {
+                    let msg = format!("{e:#}");
                     let mut st = shared.status.lock();
-                    st.output.error = Some(format!("{e:#}"));
+                    // 同じエラーを 2 秒おきに書き続けないよう、変わったときだけ残す
+                    if st.output.error.as_deref() != Some(msg.as_str()) {
+                        log::warn!("出力を開けません: {msg}");
+                    }
+                    st.output.error = Some(msg);
                     st.output.running = false;
                 }
                 if let Some(Flow::Stop) =
