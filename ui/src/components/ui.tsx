@@ -159,7 +159,7 @@ export function Button({ children, onClick, variant = "secondary", disabled, cla
       disabled={disabled}
       onClick={onClick}
       className={cn(
-        "focus-ring inline-flex h-8 items-center justify-center gap-1.5 rounded-[10px] px-3.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
+        "focus-ring inline-flex h-8 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-[10px] px-3.5 text-[13px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40",
         variant === "primary" && "bg-text-primary text-background hover:opacity-90",
         variant === "secondary" && "border border-border bg-surface-raised text-text-primary hover:border-border-hover hover:bg-surface-hover",
         variant === "ghost" && "text-text-secondary hover:bg-surface-hover hover:text-text-primary",
