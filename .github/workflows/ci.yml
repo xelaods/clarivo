@@ -107,19 +107,14 @@ jobs:
           $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
           New-Item -ItemType Directory -Force -Path smoke | Out-Null
           $bmp.Save("smoke/screen.png", [System.Drawing.Imaging.ImageFormat]::Png)
-          # 縮小した JPEG を注釈に分けて出す（成果物を開けない環境でも画面を確かめられるように）
-          $w = 1000; $h = [int]($b.Height * $w / $b.Width)
+          # 縮小した JPEG を base64 にして保存（次のステップで注釈に分けて出す）
+          $w = 800; $h = [int]($b.Height * $w / $b.Width)
           $small = New-Object System.Drawing.Bitmap $bmp, $w, $h
           $enc = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
           $ep = New-Object System.Drawing.Imaging.EncoderParameters 1
-          $ep.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), 55L
+          $ep.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), 50L
           $small.Save("smoke/screen.jpg", $enc, $ep)
-          $b64 = [Convert]::ToBase64String([IO.File]::ReadAllBytes("smoke/screen.jpg"))
-          $n = [Math]::Ceiling($b64.Length / 30000)
-          for ($i = 0; $i -lt $n; $i++) {
-            $part = $b64.Substring($i * 30000, [Math]::Min(30000, $b64.Length - $i * 30000))
-            Write-Output "::notice title=screen $($i + 1)/$n::$part"
-          }
+          [Convert]::ToBase64String([IO.File]::ReadAllBytes("smoke/screen.jpg")) | Out-File -Encoding ascii -NoNewline smoke/screen.b64
           Stop-Process -Id $app.Id -Force
           $log = Join-Path $env:LOCALAPPDATA "com.xelaods.clarivo/logs/clarivo.log"
           if (Test-Path $log) {
@@ -127,6 +122,39 @@ jobs:
             $text = (Get-Content $log -Tail 40) -join "%0A"
             Write-Output "::notice title=clarivo.log::$text"
           }
+
+      - name: 画面を注釈に出す（1）
+        if: always()
+        shell: bash
+        run: |
+          [ -f smoke/screen.b64 ] || exit 0
+          n=$(( ($(wc -c < smoke/screen.b64) + 3999) / 4000 ))
+          for i in $(seq 0 8); do
+            [ $i -lt $n ] || break
+            echo "::notice title=screen $(printf %02d $((i+1)))/$n::$(cut -c $((i*4000+1))-$((i*4000+4000)) smoke/screen.b64)"
+          done
+
+      - name: 画面を注釈に出す（2）
+        if: always()
+        shell: bash
+        run: |
+          [ -f smoke/screen.b64 ] || exit 0
+          n=$(( ($(wc -c < smoke/screen.b64) + 3999) / 4000 ))
+          for i in $(seq 9 17); do
+            [ $i -lt $n ] || break
+            echo "::notice title=screen $(printf %02d $((i+1)))/$n::$(cut -c $((i*4000+1))-$((i*4000+4000)) smoke/screen.b64)"
+          done
+
+      - name: 画面を注釈に出す（3）
+        if: always()
+        shell: bash
+        run: |
+          [ -f smoke/screen.b64 ] || exit 0
+          n=$(( ($(wc -c < smoke/screen.b64) + 3999) / 4000 ))
+          for i in $(seq 18 26); do
+            [ $i -lt $n ] || break
+            echo "::notice title=screen $(printf %02d $((i+1)))/$n::$(cut -c $((i*4000+1))-$((i*4000+4000)) smoke/screen.b64)"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
