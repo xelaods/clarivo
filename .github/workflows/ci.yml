@@ -97,6 +97,10 @@ jobs:
           $p = Start-Process -FilePath $exe -ArgumentList "--reset-audio" -PassThru -Wait
           if ($p.ExitCode -ne 0) { throw "--reset-audio が失敗しました: $($p.ExitCode)" }
           # 通常起動して 20 秒後も動いていること（音声デバイスの無い環境でも落ちない）
+          # セットアップガイドは確認済みなので、ミキサー画面が見えるよう初回設定済みにしておく
+          $cfg = Join-Path $env:APPDATA "com.xelaods.clarivo"
+          New-Item -ItemType Directory -Force -Path $cfg | Out-Null
+          '{"app":{"onboarded":true}}' | Out-File -Encoding utf8NoBOM (Join-Path $cfg "settings.json")
           $app = Start-Process -FilePath $exe -PassThru
           Start-Sleep -Seconds 20
           if ($app.HasExited) { throw "起動後に終了しました: $($app.ExitCode)" }

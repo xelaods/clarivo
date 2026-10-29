@@ -269,6 +269,25 @@ fn show_main(app: &AppHandle) {
     }
 }
 
+/// 画面が小さいノート PC（1280×720 相当など）でもウィンドウがはみ出さないようにする。
+fn fit_main_window(app: &AppHandle) {
+    let Some(w) = app.get_webview_window("main") else {
+        return;
+    };
+    let Ok(Some(m)) = w.current_monitor().or_else(|_| w.primary_monitor()) else {
+        return;
+    };
+    let scale = m.scale_factor();
+    let area = m.work_area();
+    let avail_w = area.size.width as f64 / scale;
+    let avail_h = area.size.height as f64 / scale;
+    let width = 1180f64.min(avail_w - 32.0).max(860.0);
+    let height = 760f64.min(avail_h - 32.0).max(560.0);
+    let _ = w.set_min_size(Some(tauri::LogicalSize::new(width.min(960.0), height.min(640.0))));
+    let _ = w.set_size(tauri::LogicalSize::new(width, height));
+    let _ = w.center();
+}
+
 fn build_tray(app: &AppHandle) -> tauri::Result<()> {
     let show = MenuItem::with_id(app, "show", "Clarivo を開く", true, None::<&str>)?;
     let mute = MenuItem::with_id(app, "mute", "マイクのミュートを切り替え", true, None::<&str>)?;
@@ -419,6 +438,7 @@ pub fn run() {
             create_overlay(&handle);
             spawn_profile_loop(handle.clone());
 
+            fit_main_window(&handle);
             if !(minimized_arg || settings.app.start_minimized) {
                 show_main(&handle);
             }
